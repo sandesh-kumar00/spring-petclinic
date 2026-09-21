@@ -1,0 +1,74 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: app
+  namespace: app
+
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: java
+
+  template:
+    metadata:
+      labels:
+        app: java
+
+    spec:
+      containers:
+        - name: app-cont
+          image: yashsaini252/java-app:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "mysql"
+            - name: MYSQL_URL
+              value: "jdbc:mysql://db-svc:3306/devops"
+            - name: MYSQL_USER
+              value: "root"
+            - name: MYSQL_PASS
+              value: "admin"
+        
+        - name: sidecar-proxy-cont
+          image: alpine/socat
+          args:
+            - tcp-listen:80,fork,reuseaddr
+            - tcp-connect:127.0.0.1:8080
+          ports:
+            - containerPort: 80
+          
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+        
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            failureThreshold: 3
+---
+
+kind: Service
+apiVersion: v1
+metadata:
+  name: app-svc
+  namespace: app
+  annotations:
+    cloud.google.com/neg: '{"ingress": true}'
+spec:
+  selector:
+    app: java
+  ports:
+    - port: 80
+      targetPort: 80
+      protocol: TCP
+  type: ClusterIP
+
+         

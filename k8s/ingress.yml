@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: my-app-ingress
+  namespace: app
+  annotations:
+    kubernetes.io/ingress.class: "gce" # GCP Load Balancer use karne ke liye
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: app-svc # Upar wali service ka naam
+            port:
+              number: 80
+
