@@ -20,11 +20,9 @@ spec:
           image: mysql:latest
           ports:
             - containerPort: 3306
-          env:
-            - name: MYSQL_ROOT_PASSWORD
-              value: admin
-            - name: MYSQL_DATABASE
-              value: devops
+          envFrom:
+            - secretRef:
+                name: my-secret
           volumeMounts:
             - name: db-data
               mountPath: /var/lib/mysql
