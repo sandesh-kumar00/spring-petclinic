@@ -1,0 +1,54 @@
+name: deploy to cloud run-name
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build-deploy-cloud-run:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: checkout code
+        uses: actions/checkout@v4
+
+      - name: Authentication to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: projects/511846968460/locations/global/workloadIdentityPools/my-pool-pool/providers/github 
+          service_account: cloud-run-manager@project-3d4fd68e-9492-4690-aa8.iam.gserviceaccount.com
+
+      - name: Gcloud SDK setup
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: configure docker to AR
+        run: |-
+          gcloud auth configure-docker europe-north2-docker.pkg.dev --quiet
+
+      - name: build image 
+        run: |-
+          docker build \
+            -t europe-north2-docker.pkg.dev/project-3d4fd68e-9492-4690-aa8/image-storage/boot-image:latest \
+            -t europe-north2-docker.pkg.dev/project-3d4fd68e-9492-4690-aa8/image-storage/boot-image:${{ github.sha }} ./
+      - name: push to AR
+        run: |-
+          docker push europe-north2-docker.pkg.dev/project-3d4fd68e-9492-4690-aa8/image-storage/boot-image:latest
+          docker push europe-north2-docker.pkg.dev/project-3d4fd68e-9492-4690-aa8/image-storage/boot-image:${{ github.sha }} 
+
+      - name: Deploy/Provision Cloud Run
+        run: |
+          gcloud run deploy boot-app \
+          --image=europe-north2-docker.pkg.dev/project-3d4fd68e-9492-4690-aa8/image-storage/boot-image:${{ github.sha }} \
+          --region=europe-north2 \
+          --platform=managed \
+          --port=8080 \
+          --allow-unauthenticated \
+          --ingress=internal-and-cloud-load-balancing \
+          --max-instances=20 \
+          --min-instances=1 \
+          
