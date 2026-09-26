@@ -47,7 +47,6 @@ jobs:
           --region=europe-north2 \
           --platform=managed \
           --port=8080 \
-          --allow-unauthenticated \
           --ingress=internal-and-cloud-load-balancing \
           --max-instances=20 \
           --min-instances=1 \
