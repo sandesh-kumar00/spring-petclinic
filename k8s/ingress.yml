@@ -4,7 +4,7 @@ metadata:
   name: my-app-ingress
   namespace: app
   annotations:
-    kubernetes.io/ingress.class: "gce" # GCP Load Balancer use karne ke liye
+    kubernetes.io/ingress.class: "gce" 
 spec:
   rules:
   - http:
@@ -13,7 +13,7 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: app-svc # Upar wali service ka naam
+            name: app-svc 
             port:
               number: 80
 
